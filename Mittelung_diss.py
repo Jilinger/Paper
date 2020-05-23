@@ -16,10 +16,7 @@ import time
 import gc
 
 # In[19]:
-import sys
-sys.path.append('../Überarbeitung/.')
 from init_atoms import *
-#from init_atoms import *
 
 # In[115]:
 
@@ -198,13 +195,13 @@ global number_atoms
 global atoms_array
 global H
 
-coupling_constant= 2.72*10**9
-number_atoms = 5    
+coupling_constant= -2.72*10**9
+number_atoms = 100    
 r_b=2.5   
 density=0.1
 radius = (np.sqrt(number_atoms*r_b**2/density))
-times_exact=np.logspace(-8,-3,100)
-times=np.logspace(-8,-3,100)
+times_exact=np.logspace(-8,-3,150)
+times=np.logspace(-8,-3,150)
 
 
 # ## Mehrere aufeinmal
@@ -219,25 +216,27 @@ def ME(t, rho):
     return np.ravel(-1j*(np.dot(H, rho)- np.dot(rho, H)) -gamma*terms)
 
 
-index=0
-diss_khz=np.array([10,50,100])
+index=2
+diss_khz=np.array([0.1,1,10])
 gamma_khz=diss_khz[index]
 gamma=gamma_khz*10**3*2*np.pi
 
-iterations=10
+atol=10**-6  #10**-6
+rtol=10**-6  #10**-3
+
+iterations=2
 
 
 # In[111]:
 
-
 angeregt=0
-
 
 
 start1=time.time()
 
-atoms_array = produce_atoms(number_atoms,radius,r_b)
-
+atoms_file = open("/home/hd/hd_hd/hd_wo455/Schreibtisch/Configurations/density_"+str(density)+"/atoms_"+str(number_atoms)+"_"+str(index)+"/atoms_array_"+str(0)+".npy","rb")
+atoms_array = np.load(atoms_file)
+atoms_file.close()
 #exakt
 eigenvalues, eigenvectors,H = generate_hamiltonian(atoms_array)
 prob_exact=Berechnung(eigenvalues,eigenvectors,number_atoms,times_exact).squeeze()
@@ -245,7 +244,7 @@ prob_exact=Berechnung(eigenvalues,eigenvectors,number_atoms,times_exact).squeeze
 #Mastereq
 initial=np.zeros((number_atoms,number_atoms), dtype=complex)
 initial[0][0]=1
-results = solve_ivp(ME, [0,times[-1]],initial.ravel(), t_eval=times,rtol=1e-4, atol=1e-6) 
+results = solve_ivp(ME, [0,times[-1]],initial.ravel(), t_eval=times, atol=atol, rtol=rtol) 
 prob_diss=np.reshape(results.y,(number_atoms,number_atoms, len(times))).diagonal()
 
 
@@ -270,20 +269,65 @@ n_intervall_inf_diss_S=0
 deviation_diss_S=0 
 distribution_width_diss_S=0 
 
+text="iteration: 0, density=" +str(np.round(density,3))+", number_atoms="+str(number_atoms)+", gamma="+str(gamma_khz)+", tend= "+str(times[-1])
+f_exact = open("/home/hd/hd_hd/hd_wo455/Schreibtisch/Results/Dissipation/normal_"+str(number_atoms)+"_"+str(np.round(density,3))+"_"+str(gamma_khz)+".npy","wb")
+np.save(f_exact,text)
+np.save(f_exact,r_1_normal) 
+np.save(f_exact,r_2_normal) 
+np.save(f_exact,density_normal) 
+np.save(f_exact,density_inf_normal) 
+np.save(f_exact,ipr_normal) 
+np.save(f_exact,n_intervall_inf_normal) 
+np.save(f_exact,deviation_normal) 
+np.save(f_exact,distribution_width_normal) 
+np.save(f_exact,np.sqrt(r_1_normal_S/iterations)) 
+np.save(f_exact,np.sqrt(r_2_normal_S/iterations)) 
+np.save(f_exact,np.sqrt(density_normal_S/iterations)) 
+np.save(f_exact,np.sqrt(density_inf_normal_S/iterations)) 
+np.save(f_exact,np.sqrt(ipr_normal_S/iterations)) 
+np.save(f_exact,np.sqrt(n_intervall_inf_normal_S/iterations)) 
+np.save(f_exact,np.sqrt(deviation_normal_S/iterations)) 
+np.save(f_exact,np.sqrt(distribution_width_normal_S/iterations)) 
+f_exact.close()
+
+text="iteration: 0, density=" +str(np.round(density,3))+", number_atoms="+str(number_atoms)+", gamma="+str(gamma_khz)+", tend= "+str(times[-1])
+f_diss = open("/home/hd/hd_hd/hd_wo455/Schreibtisch/Results/Dissipation/dissipation_"+str(number_atoms)+"_"+str(np.round(density,3))+"_"+str(gamma_khz)+".npy","wb")
+np.save(f_diss,text)
+np.save(f_diss,r_1_diss) 
+np.save(f_diss,r_2_diss) 
+np.save(f_diss,density_diss) 
+np.save(f_diss,density_inf_diss) 
+np.save(f_diss,ipr_diss) 
+np.save(f_diss,n_intervall_inf_diss) 
+np.save(f_diss,deviation_diss) 
+np.save(f_diss,distribution_width_diss)
+np.save(f_diss,np.sqrt(r_1_diss_S/iterations)) 
+np.save(f_diss,np.sqrt(r_2_diss_S/iterations))
+np.save(f_diss,np.sqrt(density_diss_S/iterations)) 
+np.save(f_diss,np.sqrt(density_inf_diss_S/iterations)) 
+np.save(f_diss,np.sqrt(ipr_diss_S/iterations))
+np.save(f_diss,np.sqrt(n_intervall_inf_diss_S/iterations)) 
+np.save(f_diss,np.sqrt(deviation_diss_S/iterations)) 
+np.save(f_diss,np.sqrt(distribution_width_diss_S/iterations))
+f_diss.close()
 
 for i in range(0,iterations-1):
-    atoms_array = produce_atoms(number_atoms,radius,r_b)
+    atoms_file = open("/home/hd/hd_hd/hd_wo455/Schreibtisch/Configurations/density_"+str(density)+"/atoms_"+str(number_atoms)+"_"+str(index)+"/atoms_array_"+str(i+1)+".npy","rb")
+    atoms_array = np.load(atoms_file)
+    atoms_file.close()
     
     #exakt
     eigenvalues, eigenvectors,H = generate_hamiltonian(atoms_array)
     prob_exact=Berechnung(eigenvalues,eigenvectors,number_atoms,times_exact).squeeze()
 
     #Mastereq
+    start2=time.time()
     initial=np.zeros((number_atoms,number_atoms), dtype=complex)
     initial[0][0]=1
-    results = solve_ivp(ME, [0,times[-1]],initial.ravel(), t_eval=times,rtol=1e-4, atol=1e-6) 
+    results = solve_ivp(ME, [0,times[-1]],initial.ravel(), t_eval=times,atol=atol,rtol=rtol) 
     prob_diss=np.reshape(results.y,(number_atoms,number_atoms, len(times))).diagonal()
-
+    
+    print(time.time()-start2)
     
     r_1_normal_tmp,r_2_normal_tmp, density_normal_tmp, density_inf_normal_tmp,ipr_normal_tmp, n_intervall_inf_normal_tmp, deviation_normal_tmp, distribution_width_normal_tmp=auswertung(prob_exact)
     r_1_diss_tmp,r_2_diss_tmp, density_diss_tmp, density_inf_diss_tmp,ipr_diss_tmp, n_intervall_inf_diss_tmp, deviation_diss_tmp, distribution_width_diss_tmp=auswertung(prob_diss)  
@@ -342,6 +386,49 @@ for i in range(0,iterations-1):
     deviation_diss_S +=  (deviation_diss_tmp-deviation_diss)*(deviation_diss_tmp-deviation_diss_prev)
     distribution_width_diss_S += (distribution_width_diss_tmp-distribution_width_diss)*(distribution_width_diss_tmp-distribution_width_diss_prev)
 
+
+    text="iteration: " +str(i)+"density=" +str(np.round(density,3))+", number_atoms="+str(number_atoms)+", gamma="+str(gamma_khz)+", tend= "+str(times[-1])
+    f_exact = open("/home/hd/hd_hd/hd_wo455/Schreibtisch/Results/Dissipation/normal_"+str(number_atoms)+"_"+str(np.round(density,3))+"_"+str(gamma_khz)+".npy","wb")
+    np.save(f_exact,text)
+    np.save(f_exact,r_1_normal) 
+    np.save(f_exact,r_2_normal) 
+    np.save(f_exact,density_normal) 
+    np.save(f_exact,density_inf_normal) 
+    np.save(f_exact,ipr_normal) 
+    np.save(f_exact,n_intervall_inf_normal) 
+    np.save(f_exact,deviation_normal) 
+    np.save(f_exact,distribution_width_normal) 
+    np.save(f_exact,np.sqrt(r_1_normal_S/iterations)) 
+    np.save(f_exact,np.sqrt(r_2_normal_S/iterations)) 
+    np.save(f_exact,np.sqrt(density_normal_S/iterations)) 
+    np.save(f_exact,np.sqrt(density_inf_normal_S/iterations)) 
+    np.save(f_exact,np.sqrt(ipr_normal_S/iterations)) 
+    np.save(f_exact,np.sqrt(n_intervall_inf_normal_S/iterations)) 
+    np.save(f_exact,np.sqrt(deviation_normal_S/iterations)) 
+    np.save(f_exact,np.sqrt(distribution_width_normal_S/iterations)) 
+    f_exact.close()
+        
+    text="iteration: " +str(i)+"density=" +str(np.round(density,3))+", number_atoms="+str(number_atoms)+", gamma="+str(gamma_khz)+", tend= "+str(times[-1])
+    f_diss = open("/home/hd/hd_hd/hd_wo455/Schreibtisch/Results/Dissipation/dissipation_"+str(number_atoms)+"_"+str(np.round(density,3))+"_"+str(gamma_khz)+".npy","wb")
+    np.save(f_diss,text)
+    np.save(f_diss,r_1_diss) 
+    np.save(f_diss,r_2_diss) 
+    np.save(f_diss,density_diss) 
+    np.save(f_diss,density_inf_diss) 
+    np.save(f_diss,ipr_diss) 
+    np.save(f_diss,n_intervall_inf_diss) 
+    np.save(f_diss,deviation_diss) 
+    np.save(f_diss,distribution_width_diss)
+    np.save(f_diss,np.sqrt(r_1_diss_S/iterations)) 
+    np.save(f_diss,np.sqrt(r_2_diss_S/iterations))
+    np.save(f_diss,np.sqrt(density_diss_S/iterations)) 
+    np.save(f_diss,np.sqrt(density_inf_diss_S/iterations)) 
+    np.save(f_diss,np.sqrt(ipr_diss_S/iterations))
+    np.save(f_diss,np.sqrt(n_intervall_inf_diss_S/iterations)) 
+    np.save(f_diss,np.sqrt(deviation_diss_S/iterations)) 
+    np.save(f_diss,np.sqrt(distribution_width_diss_S/iterations))
+    f_diss.close()
+
 r_1_normal_S=np.sqrt(r_1_normal_S/iterations)
 r_2_normal_S=np.sqrt(r_2_normal_S/iterations)
 density_normal_S=np.sqrt( density_normal_S/iterations)
@@ -362,8 +449,8 @@ distribution_width_diss_S=np.sqrt(distribution_width_diss_S/iterations)
     
     
 
-text="density=" +str(np.round(density,3))+", number_atoms="+str(number_atoms)+", gamma="+str(gamma_khz)+", tend= "+str(times[-1])
-f_exact = open("home/hd/hd_hd/hd_wo455/Schreibtisch/Results/Dissipation/normal_"+str(number_atoms)+"_"+str(np.round(density,3))+"_"+str(gamma_khz)+".npy","wb")
+text="finalsaving iteration: " +str(iterations)+ " density=" +str(np.round(density,3))+", number_atoms="+str(number_atoms)+", gamma="+str(gamma_khz)+", tend= "+str(times[-1])
+f_exact = open("/home/hd/hd_hd/hd_wo455/Schreibtisch/Results/Dissipation/normal_"+str(number_atoms)+"_"+str(np.round(density,3))+"_"+str(gamma_khz)+".npy","wb")
 np.save(f_exact,text)
 np.save(f_exact,r_1_normal) 
 np.save(f_exact,r_2_normal) 
@@ -381,10 +468,10 @@ np.save(f_exact,ipr_normal_S)
 np.save(f_exact,n_intervall_inf_normal_S) 
 np.save(f_exact,deviation_normal_S) 
 np.save(f_exact,distribution_width_normal_S) 
-
+f_exact.close()
     
-text="density=" +str(np.round(density,3))+", number_atoms="+str(number_atoms)+", gamma="+str(gamma_khz)+", tend= "+str(times[-1])
-f_diss = open("home/hd/hd_hd/hd_wo455/Schreibtisch/Results/Dissipation/dissipation_"+str(number_atoms)+"_"+str(np.round(density,3))+"_"+str(gamma_khz)+".npy","wb")
+text="finalsaving iteration: " +str(iterations)+ " density=" +str(np.round(density,3))+", number_atoms="+str(number_atoms)+", gamma="+str(gamma_khz)+", tend= "+str(times[-1])
+f_diss = open("/home/hd/hd_hd/hd_wo455/Schreibtisch/Results/Dissipation/dissipation_"+str(number_atoms)+"_"+str(np.round(density,3))+"_"+str(gamma_khz)+".npy","wb")
 np.save(f_diss,text)
 np.save(f_diss,r_1_diss) 
 np.save(f_diss,r_2_diss) 
@@ -402,6 +489,6 @@ np.save(f_diss,ipr_diss_S)
 np.save(f_diss,n_intervall_inf_diss_S) 
 np.save(f_diss,deviation_diss_S) 
 np.save(f_diss,distribution_width_diss_S)
-    
+f_diss.close()
 
 print(time.time()-start1)

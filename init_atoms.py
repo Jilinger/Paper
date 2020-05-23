@@ -5,79 +5,6 @@ import random
 import scipy
 import time
 
-
-def to_ind_1D(coord, breite):
-    x_shifted = coord[0]+breite
-    i = np.floor(x_shifted/(size_square))
-    return int(i)
-
-def get_atoms_near_1D(punkt, counting_atoms,breite):
-    m = to_ind_1D(punkt[0],breite)
-    atoms_near=[]
-    atoms_near.extend(counting_atoms[m])
-    
-    try:
-        atoms_near.extend(counting_atoms[m+1])             
-        atoms_near.extend(counting_atoms[m-1])
-        return atoms_near
-    except IndexError:
-        if m+1<number_squares:
-            atoms_near.extend(counting_atoms[m+1])
-        if (m-1)>=0: 
-            atoms_near.extend(counting_atoms[m-1])
-    return atoms_near
-
-
-def produce_atoms_1D(number_atoms, breite, r_b, versuch_max):
-    global size_square
-    global number_squares
-    size_square = 2*r_b  
-    number_squares= int(breite*2/size_square)
-    size_square = breite*2/number_squares
-  
-    
-    counting_atoms = [[] for i in range(number_squares)]
-        
-    atoms = [[0,0]]
-    m = to_ind_1D([0,0], breite)
-    counting_atoms[m] = [[0,0]]
-    
-    i=1
-    y=0
-    while i <number_atoms:
-        x=random.uniform(-1,1)*breite
-        punkt = np.array([[x,y]]) 
-        gesetzt= False
-        
-        k=0
-        while (gesetzt==False):
-            k+=1
-            if k>versuch_max:
-                atoms=[[0,0]]
-                counting_atoms=[[] for i in range(number_squares)]
-                m = to_ind_1D([0,0], breite)
-                counting_atoms[m] = [[0,0]]
-                i=1
-                                  
-            gesetzt=True
-            atoms_near = get_atoms_near_1D(punkt, counting_atoms,breite)
-
-            if atoms_near:
-                if ((np.min(scipy.spatial.distance.cdist(atoms_near, punkt, metric='euclidean')))<(2*r_b)):
-                    x=random.uniform(-1,1)*breite
-                    punkt = np.array([[x,y]]) 
-                    gesetzt=False
-    
-        atoms.append(punkt[0])
-        m = to_ind_1D(punkt[0],breite)
-        counting_atoms[m].append(punkt[0].tolist())
-        i+=1
-
-    return np.round(atoms,4)
-
-
-
-
 #%% 2D radial symmetric distributed
 def to_ind(coord, radius):
     x_shifted = coord[0]+radius
@@ -180,44 +107,6 @@ def produce_atoms(number_atoms, radius, r_b, versuch_max):
         atoms.append(punkt[0])
         m,n = to_ind(punkt[0],radius)
         counting_atoms[m][n].append(punkt[0].tolist())
-        i+=1
-
-    return np.round(atoms,4)
-
-
-def produce_atoms_2d_square(number_atoms, a,b, r_b, versuch_max):
-    global size_square
-    global number_squares
-    size_square = 2*r_b   #np.sqrt(density*50*r_b**2)   #2*r_b   #wähle size_square so, dass 50 atome drin sind.
-    #size_square gerade klein genug um 8 Felder außen rum zu benutzen um abzugleichen
-
-
-    atoms = [[0,0]]
- 
-    i=1
-    while i <number_atoms:
-        x=a*random.uniform(-1,1)
-        y=b*random.uniform(-1,1)
-        punkt = np.array([[x,y]]) 
-        gesetzt= False
-        
-        k=0
-        while (gesetzt==False):
-            k+=1
-            if k>versuch_max:
-                atoms=[[0,0]]
-                i=1
-                                  
-            gesetzt=True
-            atoms_near = atoms
-            if atoms_near:
-                if ((np.min(scipy.spatial.distance.cdist(atoms_near, punkt, metric='euclidean')))<(2*r_b)):
-                    x=a*random.uniform(-1,1)
-                    y=b*random.uniform(-1,1)
-                    punkt = np.array([[x,y]]) 
-                    gesetzt=False
-    
-        atoms.append(punkt[0])
         i+=1
 
     return np.round(atoms,4)
